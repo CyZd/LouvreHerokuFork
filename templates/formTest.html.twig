@@ -1,0 +1,226 @@
+{% extends 'base.html.twig' %}
+
+{% form_theme form _self %}
+
+
+
+{% block _command_collection_entry_widget %}
+    <div class="col-lg-12 align-items-center">
+        <h6>{% trans %}Cliquez ici pour compléter votre achat:{% endtrans %}</h6>
+            <p>
+                <a class="btn btn-warning btn-block" data-toggle="collapse" href="#collapseticket_{{ form.vars.id }}" role="button" aria-expanded="true" aria-controls="collapseticket">
+                {% trans %}Afficher/Masquer ce billet{% endtrans %}
+                </a>
+            </p>
+            <div class="collapse show" id="collapseticket_{{ form.vars.id }}">
+                <div class="card card-body">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            {{ form_row(form['VisitorName'],{'label':'Prénom'|trans}) }}
+                        </div>
+                        <div class="form-group col-md-6">
+                            {{ form_row(form['VisitorSurName']) }}
+                        </div>
+                        <div class="form-group col-md-6">
+                            {{ form_row(form['VisitorCountry']) }}
+                        </div>
+                        <div class="form-group col-md-6">
+                            {{ form_row(form['VisitorDoB']) }}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-check" id="ReducedPrice">
+                            {{ form_row(form['ReducedPrice']) }}
+                        </div>
+                    </div>
+                    
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+
+{% endblock %}
+
+
+
+{% block body %}
+{{ form_start(form) }}
+    <h5 class="ticket-top">{% trans %}Vous pouvez commander plusieurs billets à l'aide du bouton "Ajouter un billet".{% endtrans %}</h5> 
+        <div class="col-lg-12">
+            <div class="ticketsOrdered" id="ticket_list" data-prototype="{{ form_widget(form.ticketsOrdered.vars.prototype)|e('html_attr')}}">
+                {% for tickets in form.ticketsOrdered %}        
+                    {{ form_widget (form) }}       
+                {% endfor %}
+            </div>
+        </div>
+        <div class="form-group col-md-6" id="CloseDays" data-toggle="popover" container: 'body' data-trigger="focus" data-html="true" title="{% trans %}Attention:{% endtrans %}" data-content="{% trans %}Le musée est fermé le mardi, le dimanche et les jours fériés.{% endtrans %}">
+            {{ form_row(form['DesiredDate']) }}
+        </div>
+        <div class="form-group col-md-6" id="HalfDay" data-toggle="popover" container: 'body' data-trigger="focus" data-html="true" title="{% trans %}Attention:{% endtrans %}" data-content="{% trans %}La demi-journée ne permet de rentrer qu'à partir de 14h{% endtrans %}">
+            {{ form_row(form['DayType']) }}
+        </div>
+ {{ form_end(form) }}
+<div class="row justify-content-md-center">
+    <a href="{{path('index')}}" class="btn btn-dark" id="back-first-page" role="button">{% trans %}Retour à l'accueil{% endtrans %}</a>
+</div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+<script>
+$(function () {
+  $('[data-toggle="popover"]').popover()
+});
+$(function () {
+  $('.popover-dismiss').popover({
+    trigger: 'focus'
+  })
+});
+</script>
+
+<script>
+
+var $collectionHolder;
+
+// setup an "add a tag" link
+var $addTagButton = $('<button type="button" class="btn btn-warning btn-block">{% trans %}Ajouter un billet{% endtrans %}</button>');
+var $newLinkLi = $('<div class="col-lg-12"></div>').append($addTagButton);
+
+
+jQuery(document).ready(function() {
+    // Get the ul that holds the collection of tags
+    $collectionHolder = $('.ticketsOrdered');
+    // add the "add a tag" anchor and li to the tags ul
+    $collectionHolder.append($newLinkLi);
+
+
+
+    // count the current form inputs we have (e.g. 2), use that as the new
+    // index when inserting a new item (e.g. 2)
+    $collectionHolder.data('index', $collectionHolder.find(':input').length);
+
+    $addTagButton.on('click', function(e) {
+        // add a new tag form (see next code block)
+        addNewForm($collectionHolder, $newLinkLi);
+    });
+
+    $collectionHolder.find('div').each(function(){
+        addDeleteLink($(this));
+    })
+});
+
+//add 
+function addNewForm($collectionHolder, $newLinkLi) {
+    // Get the data-prototype explained earlier
+    var prototype = $collectionHolder.data('prototype');
+
+    // get the new index
+    var index = $collectionHolder.data('index');
+
+    var newForm = prototype;
+    // You need this only if you didn't set 'label' => false in your tags field in TaskType
+    // Replace '__name__label__' in the prototype's HTML to
+    // instead be a number based on how many items we have
+    // newForm = newForm.replace(/__name__label__/g, index);
+
+    // Replace '__name__' in the prototype's HTML to
+    // instead be a number based on how many items we have
+    newForm = newForm.replace(/__name__/g, index);
+
+    // increase the index with one for the next item
+    $collectionHolder.data('index', index + 1);
+
+    // Display the form in the page in an li, before the "Add a tag" link li
+    var $newFormLi = $('<div></div>').append(newForm);
+    $newLinkLi.before($newFormLi);
+
+    //add delete link
+    addDeleteForm($newFormLi);
+}
+
+function addDeleteForm($form){
+    var $addDeleteButton = $('<div class="col-lg-12"><p><button type="button" class="btn btn-danger btn-block">{% trans %}Supprimer ce billet{% endtrans %}</button></p></div>');
+    $form.append($addDeleteButton);
+
+    $addDeleteButton.on('click',function(e){
+        $form.remove();
+    })
+}
+   
+</script>
+{% if app.request.getLocale() == 'fr' %}
+    <script>
+    $(document).ready(function(){
+        $('.js-datepicker').datepicker({
+            format:'dd-mm-yyyy',
+            todayBtn: 'linked',
+            language:'fr',
+            yearRange: "-0:+1",
+            changeMonth: true,
+            changeYear: true,
+            daysOfWeekDisabled: "0,2",
+            todayHighlight: true,
+            startDate: new Date(),
+            autoclose: true
+        });
+    });
+    </script>
+{% else %} 
+<script>
+    $(document).ready(function(){
+        $('.js-datepicker').datepicker({
+            format:'dd-mm-yyyy',
+            todayBtn: 'linked',
+            language:'en',
+            yearRange: "-0:+1",
+            changeMonth: true,
+            changeYear: true,
+            daysOfWeekDisabled: "0,2",
+            todayHighlight: true,
+            startDate: new Date(),
+            autoclose: true
+        });
+    });
+    </script>
+{% endif %}
+
+{% if app.request.getLocale() == 'fr' %}
+    <script>
+    $(document).ready(function(){
+        $('.js-datepicker-birth').datepicker({
+            format:'dd-mm-yyyy',
+            yearRange: "-0:+1",
+            changeMonth: true,
+            changeYear: true,
+            startView: 3,
+            language:'fr',
+            autoclose: true
+        });
+    });
+    </script>
+{% else %} 
+<script>
+    $(document).ready(function(){
+        $('.js-datepicker-birth').datepicker({
+            format:'dd-mm-yyyy',
+            yearRange: "-0:+1",
+            changeMonth: true,
+            changeYear: true,
+            startView: 3,
+            language:'en',
+            autoclose: true
+        });
+    });
+    </script>
+{% endif %}
+
+<script>
+    $(document).ready(function(){
+        $('#CloseDays').on('click'.function(e){
+            console.log("works");
+        })
+    })
+</script>
+
+{% endblock %}

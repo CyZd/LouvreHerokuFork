@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+
+<h3 id="result">{% trans %}Une erreur est survenue, votre paiement n'a pas pu être confirmé.{% endtrans %}<h3>
+
+<a href="mailto:admin@louvre.fr" class="btn btn-info" role="button">{% trans %}Contacter l'assistance{% endtrans %}</a>
+
+<div class="row justify-content-md-center">
+    <div class="col-6">
+        <a href="{{path('index')}}" class="btn btn-dark" role="button">{% trans %}Retour à l'accueil{% endtrans %}</a>
+        <a href="{{path('index')}}commander/" class="btn btn-dark" role="button">{% trans %}Retour au formulaire{% endtrans %}</a>
+    </div>
+</div>
+
+{% endblock %}

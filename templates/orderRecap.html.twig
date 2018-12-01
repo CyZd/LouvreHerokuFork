@@ -1,0 +1,121 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<script src="https://js.stripe.com/v3/"></script>
+
+<div class="container">
+  <div class="row justify-content-md-center">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h4>{% trans %}Récapitulatif de votre commande{% endtrans %}</h4>
+        </div>
+              {% set fullPrice = 0 %}
+        <div="card-body">
+              {% for tickets in ticket %}
+              <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{% trans %}Nom de l'acheteur:{% endtrans %} {{ tickets.VisitorSurName }}</h5>
+                    <h6 class="card-title">{% trans %}Prénom de l'acheteur:{% endtrans %} {{ tickets.VisitorName}}</h6>
+                      <ul class="list-group list-group-flush">
+                          <li class="list-group-item">{% trans %}Date de visite souhaitée:{% endtrans %} {{ order.DesiredDate|date("d/m/Y") }}</li>
+                          <li class="list-group-item">{% trans %}Date d'achat:{% endtrans %} {{ tickets.Date|date("d/m/Y") }}</li>
+                          <li class="list-group-item">{% trans %}Type de journée:{% endtrans %} {% if order.DayType == 1 %} {% trans %}Journée entière {% endtrans %}{% else %} {% trans %}Demie-journée{% endtrans %} {% endif %}</li>
+                          <li class="list-group-item">{% trans %}Prix: {% endtrans %}{{ tickets.PriceTag }} euros</li>
+                      </ul>
+                    </div>
+                  </div>
+                  {% set fullPrice = fullPrice + tickets.PriceTag %}
+              {% endfor %}
+        </div>
+      <div class="col-12">
+            <h4>{% trans %}Le coût total de votre achat est de:{% endtrans %}</h4>
+            <h4 class="text-center">{{ fullPrice }} euros.</h4>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row justify-content-md-center">
+  <div class="col-6">
+    <h4 class="text-center">{% trans %}Souhaitez-vous poursuivre?{% endtrans %}</h4>
+    <a href="{{path('index')}}" class="btn btn-dark btn-block" role="button">{% trans %}Retour à l'accueil{% endtrans %}</a>
+    <a class="btn btn-info btn-block" data-toggle="collapse" href="#collapseticket" role="button" aria-expanded="true" aria-controls="collapseticket">
+    {% trans %}Oui, je souhaite payer ma commande{% endtrans %}
+    </a>
+    <div class="collapse" id="collapseticket">
+        <div class="card card-body">
+                
+
+                <form action={% if app.request.getLocale() == 'fr' %} "/fr/payment/" {% else %} "/en/payment/" {% endif %} method="post" id="payment-form">
+                <div class="form-row">
+                    <label for="card-element">
+                    {% trans %}Entrez votre numéro de CB{% endtrans %}
+                    </label>
+                    <div id="card-element" class="form-control"></div>
+                    <div id="card-errors" class="help-block" role="alert"></div>
+                </div>
+              
+                <button>{% trans %}Payer{% endtrans %}</button>
+                </form>
+        </div>
+    </div>
+    <a href={% if app.request.getLocale() == 'fr' %} "/fr/commander/" {% else %} "/en/commander/" {% endif %} class="btn btn-dark btn-block" role="button" id="recapback">{% trans %}Non, je souhaite modifier ma commande{% endtrans %}</a>
+  </div>
+</div>
+
+<script>
+// Create a Stripe client.
+var stripe = Stripe('pk_test_eALE5Dsa8rGnr0TfGJTY5b7E');
+
+// Create an instance of Elements.
+var elements = stripe.elements();
+
+// Create an instance of the card Element.
+var card = elements.create('card');
+
+// Add an instance of the card Element into the `card-element` <div>.
+card.mount('#card-element');
+
+// Handle real-time validation errors from the card Element.
+card.addEventListener('change', function(event) {
+  var displayError = document.getElementById('card-errors');
+  if (event.error) {
+    displayError.textContent = event.error.message;
+  } else {
+    displayError.textContent = '';
+  }
+});
+
+// Handle form submission.
+var form = document.getElementById('payment-form');
+form.addEventListener('submit', function(event) {
+  event.preventDefault();
+
+  stripe.createToken(card).then(function(result) {
+    if (result.error) {
+      // Inform the user if there was an error.
+      var errorElement = document.getElementById('card-errors');
+      errorElement.textContent = result.error.message;
+    } else {
+      // Send the token to your server.
+      stripeTokenHandler(result.token);
+    }
+  });
+});
+
+function stripeTokenHandler(token) {
+  // Insert the token ID into the form so it gets submitted to the server
+  var form = document.getElementById('payment-form');
+  var hiddenInput = document.createElement('input');
+  hiddenInput.setAttribute('type', 'hidden');
+  hiddenInput.setAttribute('name', 'stripeToken');
+  hiddenInput.setAttribute('value', token.id);
+  form.appendChild(hiddenInput);
+
+  // Submit the form
+  form.submit();
+}
+</script>
+
+{% endblock %}
+
